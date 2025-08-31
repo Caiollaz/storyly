@@ -110,6 +110,7 @@ Para fazer deploy no Dokploy, siga estes passos:
    - **Build Context**: `/` (raiz do projeto)
    - **Dockerfile Path**: `Dockerfile`
    - **Port**: `3001`
+   - **Build Arguments**: Adicione `GEMINI_API_KEY` com o valor da sua chave
 
 4. **Deploy:**
    - Clique em "Deploy"
@@ -131,7 +132,7 @@ Para fazer deploy no Dokploy, siga estes passos:
 ### 🐛 Troubleshooting:
 - **Variável não carrega**: Verifique se o nome está exatamente `GEMINI_API_KEY`
 - **Build falha**: Confirme que a variável foi salva antes do deploy
-- **Logs mostram "❌ Not found"**: Reinicie o container após adicionar a variável
+- **Funciona local mas não no Docker**: Certifique-se de adicionar a variável em "Build Arguments" no Dokploy
 - **Ainda não funciona**: Verifique se não há espaços extras no valor da variável
 
 ## 🎯 Como Jogar

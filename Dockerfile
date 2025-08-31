@@ -12,7 +12,11 @@ RUN npm ci
 # Copiar o código fonte
 COPY . .
 
-# Construir a aplicação
+# Definir argumento de build para a API key
+ARG GEMINI_API_KEY
+ENV GEMINI_API_KEY=${GEMINI_API_KEY}
+
+# Construir a aplicação (agora com a variável disponível)
 RUN npm run build
 
 # Etapa de produção
