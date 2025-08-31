@@ -9,6 +9,7 @@
 - **Sistema de Salvamento**: Salve e retome suas aventuras a qualquer momento
 - **Multi-idioma**: Suporte para inglês e português
 - **Temas Personalizáveis**: Escolha entre temas claro, escuro ou "paperwhite"
+- **Sistema de Fontes Sofisticado**: Literata para leitura, Cinzel/Unna para títulos épicos, Source Sans 3 para interface
 - **Experiência Imersiva**: Histórias detalhadas com escolhas significativas
 
 ## 🚀 Tecnologias Utilizadas
@@ -153,6 +154,21 @@ Para fazer deploy no Dokploy, siga estes passos:
 - **Slate**: Tema escuro com tons de azul
 - **Dark**: Tema escuro clássico
 - **Paperwhite**: Tema claro com aparência de papel
+
+## 📖 Sistema de Fontes
+
+### Fontes Utilizadas:
+- **Literata**: Fonte serifada do Google, otimizada para leitura longa
+- **Cinzel**: Fonte épica para títulos principais (maiúsculas, espaçamento amplo)
+- **Unna**: Fonte dramática para títulos secundários
+- **Source Sans 3**: Fonte sans-serif limpa para elementos da interface
+
+### Características:
+- **Literata**: Espaçamento otimizado (1.6), renderização suavizada
+- **Cinzel**: Estilo épico com maiúsculas e espaçamento amplo
+- **Unna**: Estilo dramático com peso bold
+- **Source Sans 3**: Interface limpa e moderna
+- Responsividade para diferentes tamanhos de tela
 
 ## 🛠️ Estrutura do Projeto
 

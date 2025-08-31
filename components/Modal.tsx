@@ -47,11 +47,11 @@ const Modal: React.FC<ModalProps> = ({
         <div className="p-6">
           <h2 
             id="modal-title"
-            className="text-xl font-bold text-[var(--text-primary)] mb-2"
+            className="text-xl font-bold text-[var(--text-primary)] mb-2 title-dramatic"
           >
             {title}
           </h2>
-          <p className="text-[var(--text-secondary)] mb-6">
+          <p className="text-[var(--text-secondary)] mb-6 body-text">
             {message}
           </p>
           
@@ -59,14 +59,14 @@ const Modal: React.FC<ModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-[var(--bg-secondary)] text-[var(--text-secondary)] rounded-md hover:text-[var(--text-primary)] transition-colors"
+              className="px-4 py-2 bg-[var(--bg-secondary)] text-[var(--text-secondary)] rounded-md hover:text-[var(--text-primary)] transition-colors body-text"
             >
               {cancelText || t('cancel')}
             </button>
             <button
               type="button"
               onClick={handleConfirm}
-              className="px-4 py-2 bg-[var(--accent-color)] text-[var(--text-on-accent)] rounded-md hover:bg-[var(--accent-hover)] transition-colors"
+              className="px-4 py-2 bg-[var(--accent-color)] text-[var(--text-on-accent)] rounded-md hover:bg-[var(--accent-hover)] transition-colors body-text"
             >
               {confirmText || t('confirm')}
             </button>

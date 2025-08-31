@@ -50,6 +50,11 @@ const App: React.FC = () => {
   }, [theme]);
 
   useEffect(() => {
+    // Apply default font classes to body
+    document.body.classList.add("body-text");
+  }, []);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);
@@ -175,10 +180,10 @@ const App: React.FC = () => {
       case GameState.ERROR:
         return (
           <div className="text-center p-8">
-            <p className="text-2xl text-[var(--error-text)] mb-4">
+            <p className="text-2xl text-[var(--error-text)] mb-4 title-dramatic">
               {t("error_title")}
             </p>
-            <p className="text-[var(--text-secondary)] mb-6">{error}</p>
+            <p className="text-[var(--text-secondary)] mb-6 body-text">{error}</p>
           </div>
         );
 
@@ -187,16 +192,16 @@ const App: React.FC = () => {
         return (
           <div>
             <div className="bg-[var(--bg-primary)] rounded-lg border border-[var(--border-color)] mb-8 p-6">
-              <h2 className="text-xl font-bold text-[var(--text-accent-light)] mb-4 font-serif italic">
+              <h2 className="text-2xl font-bold text-[var(--text-accent-light)] mb-4 title-dramatic italic">
                 {t("storyteller_continues")}
               </h2>
-              <p className="whitespace-pre-wrap font-serif text-lg leading-relaxed text-[var(--text-primary)] animate-fadeInUp">
+              <p className="text-justify whitespace-pre-wrap text-lg leading-relaxed text-[var(--text-primary)] animate-fadeInUp reading-text">
                 {currentScene.description}
               </p>
             </div>
 
             <div className="space-y-4">
-              <h2 className="text-xl font-bold text-[var(--text-primary)]">
+              <h2 className="text-xl font-bold text-[var(--text-primary)] title-epic">
                 {t("what_do_you_do")}
               </h2>
               {currentScene.choices.map((choice, index) => (
@@ -233,18 +238,18 @@ const App: React.FC = () => {
       <header className="w-full max-w-3xl mx-auto mb-6">
         {gameState !== GameState.GENRE_SELECTION && (
           <div className="text-center mb-4">
-            <h1 className="text-2xl font-bold text-[var(--text-primary)]">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] title-epic">
               {genre}
             </h1>
           </div>
         )}
         <div className="flex flex-wrap justify-between items-center gap-3">
-          <div className="flex items-center gap-1 rounded-full bg-[var(--bg-secondary)] p-1 text-xs">
+          <div className="flex items-center gap-1 rounded-full bg-[var(--bg-secondary)] p-1 text-xs body-text">
             {languages.map((lang) => (
               <button
                 key={lang}
                 onClick={() => setLanguage(lang)}
-                className={`px-2 py-0.5 rounded-full uppercase transition-colors ${
+                className={`px-2 py-0.5 rounded-full uppercase transition-colors body-text ${
                   language === lang
                     ? "bg-[var(--accent-color)] text-[var(--text-on-accent)]"
                     : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
@@ -279,13 +284,14 @@ const App: React.FC = () => {
                 </button>
               ))}
             </div>
+
           </div>
         </div>
         <div className="mt-4 flex flex-col sm:flex-row gap-2">
           {gameState === GameState.PLAYING && (
             <button
               onClick={handleSaveGame}
-              className="text-sm px-3 py-1.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-accent)] transition-colors whitespace-nowrap"
+              className="text-sm px-3 py-1.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-accent)] transition-colors whitespace-nowrap body-text"
             >
               {isSaved ? t("game_saved") : t("save_game")}
             </button>
@@ -295,7 +301,7 @@ const App: React.FC = () => {
             gameState === GameState.ERROR) && (
             <button
               onClick={handleHomeConfirm}
-              className="text-sm px-3 py-1.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-accent)] transition-colors whitespace-nowrap"
+              className="text-sm px-3 py-1.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-accent)] transition-colors whitespace-nowrap body-text"
             >
               {t("home")}
             </button>
@@ -317,7 +323,7 @@ const App: React.FC = () => {
         <div ref={endOfMessagesRef} />
       </main>
       <footer className="text-center text-[var(--text-muted)] mt-8 w-full max-w-3xl mx-auto pb-4">
-        <p className="text-sm">{t("footer_text")}</p>
+        <p className="text-sm body-text">{t("footer_text")}</p>
       </footer>
     </div>
   );

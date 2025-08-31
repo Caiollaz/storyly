@@ -19,7 +19,7 @@ const ChoiceButton: React.FC<ChoiceButtonProps> = ({ text, onClick, disabled = f
       className={`${baseClasses} ${className}`}
       style={style}
     >
-      <p className="text-[var(--text-primary)] group-hover:text-[var(--text-on-accent)] transition-colors">{text}</p>
+      <p className="text-[var(--text-primary)] group-hover:text-[var(--text-on-accent)] transition-colors body-text">{text}</p>
     </button>
   );
 };

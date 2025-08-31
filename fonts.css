@@ -1,0 +1,108 @@
+/* Importar fontes do Google */
+@import url('https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Unna:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+:root {
+  /* Fontes principais */
+  --font-reading: 'Literata', 'Times New Roman', serif;
+  --font-body: 'Source Sans 3', 'Arial', sans-serif;
+  --font-title-epic: 'Cinzel', 'Times New Roman', serif;
+  --font-title-dramatic: 'Unna', 'Times New Roman', serif;
+  
+  /* Configurações de leitura otimizadas */
+  --reading-line-height: 1.6;
+  --reading-letter-spacing: 0.01em;
+  --reading-word-spacing: 0.05em;
+}
+
+/* Classe para fonte de leitura (Literata) */
+.font-reading {
+  font-family: var(--font-reading);
+  font-weight: 400;
+  line-height: var(--reading-line-height);
+  letter-spacing: var(--reading-letter-spacing);
+  word-spacing: var(--reading-word-spacing);
+}
+
+/* Classe para fonte do corpo (Source Sans 3) */
+.font-body {
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+/* Classe para títulos épicos (Cinzel) */
+.font-title-epic {
+  font-family: var(--font-title-epic);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Classe para títulos dramáticos (Unna) */
+.font-title-dramatic {
+  font-family: var(--font-title-dramatic);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Aplicar fonte de leitura otimizada para textos longos */
+.reading-text {
+  font-family: var(--font-reading);
+  line-height: var(--reading-line-height);
+  letter-spacing: var(--reading-letter-spacing);
+  word-spacing: var(--reading-word-spacing);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Aplicar fonte do corpo para elementos gerais */
+.body-text {
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+/* Aplicar fonte épica para títulos principais */
+.title-epic {
+  font-family: var(--font-title-epic);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Aplicar fonte dramática para títulos secundários */
+.title-dramatic {
+  font-family: var(--font-title-dramatic);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.theme-slate .reading-text {
+  font-weight: 400;
+}
+
+.theme-dark .reading-text {
+  font-weight: 400;
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.theme-paperwhite .reading-text {
+  font-weight: 500;
+  color: #2c2c2c;
+}
+
+@media (max-width: 768px) {
+  .reading-text {
+    line-height: 1.7;
+    letter-spacing: 0.015em;
+  }
+}
+
+@media (min-width: 1200px) {
+  .reading-text {
+    line-height: 1.5;
+    letter-spacing: 0.005em;
+  }
+}
