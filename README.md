@@ -38,11 +38,13 @@
    ```
 
 3. **Configure sua chave de API:**
-   - Obtenha uma chave de API de um serviço de IA compatível
-   - Adicione sua chave ao arquivo `.env.local`:
+   - Obtenha uma chave de API do Google Gemini em: https://makersuite.google.com/app/apikey
+   - Copie o arquivo `env.example` para `.env`:
+     ```bash
+     cp env.example .env
      ```
-     GEMINI_API_KEY=sua_chave_api_aqui
-     ```
+   - Edite o arquivo `.env` e substitua `sua_chave_api_aqui` pela sua chave real
+   - **IMPORTANTE**: Nunca commite o arquivo `.env` no Git por questões de segurança
 
 4. **Inicie a aplicação:**
    ```bash
@@ -56,17 +58,73 @@
 
 1. **Construa e execute com Docker:**
    ```bash
+   # Construa a imagem (sem dados sensíveis)
    docker build -t storyly .
+   
+   # Execute o container passando a API key como variável de ambiente
    docker run -p 3001:3001 -e GEMINI_API_KEY=sua_chave_api_aqui storyly
    ```
 
 2. **Ou use Docker Compose:**
    ```bash
+   # Configure sua API key como variável de ambiente
+   export GEMINI_API_KEY=sua_chave_api_aqui
+   
+   # Execute com Docker Compose
    docker-compose up --build
    ```
 
-3. **Acesse a aplicação:**
+3. **Para Produção com Docker Secrets:**
+   ```bash
+   # Crie um secret
+   echo "sua_chave_api_aqui" | docker secret create gemini_api_key -
+   
+   # Execute com secret
+   docker service create \
+     --name storyly \
+     --secret gemini_api_key \
+     --env GEMINI_API_KEY_FILE=/run/secrets/gemini_api_key \
+     -p 3001:3001 \
+     storyly
+   ```
+
+4. **Acesse a aplicação:**
    Abra seu navegador e visite `http://localhost:3001`
+
+## 🚀 Deploy no Dokploy (VPS)
+
+Para fazer deploy no Dokploy, siga estes passos:
+
+1. **Conecte seu repositório:**
+   - Acesse seu painel do Dokploy
+   - Vá em "Applications" → "New Application"
+   - Conecte seu repositório GitHub/GitLab
+
+2. **Configure as variáveis de ambiente:**
+   - Na seção "Environment Variables" do seu projeto
+   - Adicione: `GEMINI_API_KEY` = `sua_chave_api_aqui`
+   - **IMPORTANTE**: Nunca commite a chave no código!
+
+3. **Configure o build:**
+   - **Build Context**: `/` (raiz do projeto)
+   - **Dockerfile Path**: `Dockerfile`
+   - **Port**: `3001`
+
+4. **Deploy:**
+   - Clique em "Deploy"
+   - O Dokploy fará o build automático da imagem
+   - A aplicação estará disponível na URL fornecida
+
+5. **Configuração de domínio (opcional):**
+   - Vá em "Domains" → "Add Domain"
+   - Configure seu domínio personalizado
+   - O Dokploy configurará automaticamente o SSL
+
+### 🔒 Segurança no Dokploy:
+- ✅ Variáveis de ambiente são criptografadas
+- ✅ A API key nunca é exposta no código
+- ✅ Build automático sem dados sensíveis
+- ✅ SSL automático para domínios personalizados
 
 ## 🎯 Como Jogar
 
@@ -98,6 +156,15 @@ src/
 ├── types.ts            # Definições de tipos TypeScript
 └── index.tsx           # Ponto de entrada da aplicação
 ```
+
+## 🔒 Segurança
+
+- **NUNCA** commite arquivos `.env` ou chaves de API no repositório
+- Use o arquivo `env.example` como modelo para configuração
+- Mantenha suas chaves de API seguras e rotacione-as regularmente
+- **NUNCA** use `ARG` ou `ENV` no Dockerfile para dados sensíveis
+- Use variáveis de ambiente no runtime ou Docker Secrets para produção
+- A imagem Docker não contém dados sensíveis - apenas no momento da execução
 
 ## 🤝 Contribuindo
 

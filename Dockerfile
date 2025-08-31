@@ -16,16 +16,21 @@ COPY . .
 RUN npm run build
 
 # Etapa de produção
-FROM nginx:alpine
+FROM node:18-alpine
 
-# Copiar os arquivos construídos para o diretório padrão do nginx
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Instalar um servidor HTTP simples
+RUN npm install -g serve
 
-# Copiar o arquivo de configuração do nginx
-COPY nginx.conf /etc/nginx/nginx.conf
+WORKDIR /app
+
+# Copiar os arquivos construídos
+COPY --from=builder /app/dist .
 
 # Expor a porta 3001
 EXPOSE 3001
 
-# Comando para iniciar o nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Não definir variáveis sensíveis no Dockerfile
+# A API key será passada como variável de ambiente no runtime
+
+# Comando para iniciar o servidor
+CMD ["serve", "-s", ".", "-l", "3001"]
