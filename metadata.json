@@ -1,0 +1,5 @@
+{
+  "name": "Storyly",
+  "description": "A dynamic, AI-powered text adventure game where the story and choices are generated in real-time by Gemini, creating a unique journey every time you play.",
+  "requestFramePermissions": []
+}

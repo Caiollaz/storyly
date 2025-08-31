@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-g" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📜</text></svg>">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Storyly</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.16.0",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1"
+  }
+}
+</script>
+<style>
+    :root, .theme-slate {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-secondary-translucent: rgba(30, 41, 59, 0.5);
+      --bg-disabled: #475569;
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --text-accent: #818cf8;
+      --text-accent-light: #a5b4fc;
+      --text-on-accent: #ffffff;
+      --border-color: #334155;
+      --border-color-translucent: rgba(51, 65, 85, 0.5);
+      --accent-color: #4f46e5;
+      --accent-hover: #6366f1;
+      --focus-ring: #6366f1;
+      --error-text: #f87171;
+    }
+    .theme-dark {
+      --bg-primary: #000000;
+      --bg-secondary: #1a1a1a;
+      --bg-secondary-translucent: rgba(26, 26, 26, 0.5);
+      --bg-disabled: #333333;
+      --text-primary: #ffffff;
+      --text-secondary: #b3b3b3;
+      --text-muted: #808080;
+      --text-accent: #93c5fd;
+      --text-accent-light: #bfdbfe;
+      --text-on-accent: #ffffff;
+      --border-color: #333333;
+      --border-color-translucent: rgba(51, 51, 51, 0.5);
+      --accent-color: #2563eb;
+      --accent-hover: #3b82f6;
+      --focus-ring: #3b82f6;
+      --error-text: #ef4444;
+    }
+    .theme-paperwhite {
+      --bg-primary: #fbf6e8;
+      --bg-secondary: #ede7d7;
+      --bg-secondary-translucent: rgba(237, 231, 215, 0.5);
+      --bg-disabled: #dcd3c1;
+      --text-primary: #3a2d21;
+      --text-secondary: #5c4a3d;
+      --text-muted: #8d7a6e;
+      --text-accent: #8c5a32;
+      --text-accent-light: #a67b5b;
+      --text-on-accent: #ffffff;
+      --border-color: #dcd3c1;
+      --border-color-translucent: rgba(220, 211, 193, 0.5);
+      --accent-color: #8c5a32;
+      --accent-hover: #a67b5b;
+      --focus-ring: #8c5a32;
+      --error-text: #c0392b;
+    }
+    body {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .animate-fadeInUp {
+        animation: fadeInUp 0.6s ease-out forwards;
+    }
+    .animate-choice {
+        opacity: 0; /* Start hidden */
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+</style>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
