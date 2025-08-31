@@ -1,7 +1,3 @@
-<div align="center">
-<img width="1200" height="475" alt="Storyly Banner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
-
 # Storyly - Aventuras Interativas com IA
 
 **Storyly** é um jogo de aventura textual interativo onde cada história é única e moldada pelas suas escolhas. Utilizando inteligência artificial avançada, o Storyly gera histórias em tempo real com base no gênero selecionado e nas decisões que você toma durante a aventura.
@@ -102,4 +98,4 @@ Este projeto é licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE
 - Experimente diferentes gêneros para experiências variadas
 - Não tenha medo de fazer escolhas criativas ou inesperadas!
 
-Desenvolvido com ❤️ por [caiollaz] - onde suas escolhas moldam a história.
+Desenvolvido com ❤️ por Caio Labella - onde suas escolhas moldam a história.
