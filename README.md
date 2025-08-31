@@ -104,6 +104,7 @@ Para fazer deploy no Dokploy, siga estes passos:
    - Na seção "Environment Variables" do seu projeto
    - Adicione: `GEMINI_API_KEY` = `sua_chave_api_aqui`
    - **IMPORTANTE**: Nunca commite a chave no código!
+   - **DICA**: Se não funcionar, tente reiniciar o container após adicionar a variável
 
 3. **Configure o build:**
    - **Build Context**: `/` (raiz do projeto)
@@ -114,6 +115,7 @@ Para fazer deploy no Dokploy, siga estes passos:
    - Clique em "Deploy"
    - O Dokploy fará o build automático da imagem
    - A aplicação estará disponível na URL fornecida
+   - **Verifique os logs** para confirmar que a variável foi carregada (deve aparecer "✅ Loaded")
 
 5. **Configuração de domínio (opcional):**
    - Vá em "Domains" → "Add Domain"
@@ -125,6 +127,12 @@ Para fazer deploy no Dokploy, siga estes passos:
 - ✅ A API key nunca é exposta no código
 - ✅ Build automático sem dados sensíveis
 - ✅ SSL automático para domínios personalizados
+
+### 🐛 Troubleshooting:
+- **Variável não carrega**: Verifique se o nome está exatamente `GEMINI_API_KEY`
+- **Build falha**: Confirme que a variável foi salva antes do deploy
+- **Logs mostram "❌ Not found"**: Reinicie o container após adicionar a variável
+- **Ainda não funciona**: Verifique se não há espaços extras no valor da variável
 
 ## 🎯 Como Jogar
 
