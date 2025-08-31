@@ -52,6 +52,22 @@
 5. **Acesse a aplicação:**
    Abra seu navegador e visite `http://localhost:5173`
 
+## 🐳 Como Executar com Docker
+
+1. **Construa e execute com Docker:**
+   ```bash
+   docker build -t storyly .
+   docker run -p 3001:3001 -e GEMINI_API_KEY=sua_chave_api_aqui storyly
+   ```
+
+2. **Ou use Docker Compose:**
+   ```bash
+   docker-compose up --build
+   ```
+
+3. **Acesse a aplicação:**
+   Abra seu navegador e visite `http://localhost:3001`
+
 ## 🎯 Como Jogar
 
 1. **Selecione um gênero** entre as opções pré-definidas ou crie o seu próprio
