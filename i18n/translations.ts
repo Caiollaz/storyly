@@ -28,6 +28,11 @@ export const translations = {
     
     // App Modals
     home_confirm_body: "Are you sure you want to return to the home screen? Unsaved progress will be lost.",
+    confirm_action: "Confirm Action",
+    yes: "Yes",
+    no: "No",
+    cancel: "Cancel",
+    confirm: "Confirm",
 
     // App Error
     error_title: "A problem has occurred!",
@@ -73,6 +78,11 @@ export const translations = {
     
     // App Modals
     home_confirm_body: "Tem certeza de que deseja voltar para a tela inicial? O progresso não salvo será perdido.",
+    confirm_action: "Confirmar Ação",
+    yes: "Sim",
+    no: "Não",
+    cancel: "Cancelar",
+    confirm: "Confirmar",
 
     // App Error
     error_title: "Ocorreu um problema!",
