@@ -23,10 +23,13 @@ pnpm dev            # http://localhost:3000
 pnpm build          # standalone
 pnpm start
 pnpm lint / pnpm format
+pnpm test           # vitest (lógica pura de gating)
 pnpm db:generate    # gera migration SQL a partir do schema
 pnpm db:migrate     # aplica migrations (precisa DATABASE_URL)
 pnpm db:push        # aplica schema direto (dev)
 ```
+
+Migrations rodam **automaticamente no boot** (`instrumentation.ts` → drizzle migrator; SQL embarcado no standalone via `outputFileTracingIncludes`). `pnpm db:migrate` é fallback manual.
 
 ## Envs (todas server-side, sem `NEXT_PUBLIC_`)
 
@@ -50,20 +53,23 @@ Setup externo: Google Cloud OAuth client (redirect `<AUTH_URL>/api/auth/callback
 
 ## Gating / entitlements (`lib/entitlements.ts`)
 
-`FREE_LIMITS`: 3 aventuras, 20 cenas/dia, 1 save. Pro = ilimitado + gêneros premium.
-- `isPro(userId)`, `getEntitlements(userId)` (usado por `app/api/me` e pelos server pages).
-- `assertCanStartAdventure` / `assertCanGenerateScene` (incrementam `usage`), `assertCanUseGenre`, `assertCanSave` — lançam `GatingError` (status 402, com `code`).
-- **Gênero premium = qualquer coisa fora dos 5 básicos** (romance + custom). Allowlist server-side = valores dos 5 keys básicos em todos os idiomas (`FREE_GENRE_VALUES`).
+`FREE_LIMITS`: 3 aventuras, 20 cenas/dia, 1 save. Pro = ilimitado + gêneros premium, mas com cap de segurança `PRO_SCENES_PER_DAY=500` (anti-abuso, não anunciado).
+- `isPro(userId)`, `getEntitlements(userId)`, `reconcileSubscription(userId)` (fallback p/ webhook perdido — chamado no `/account`).
+- **check/record separados:** `check*` só lê (pre-check), `record*` incrementa com SQL atômico — conta só APÓS geração bem-sucedida (falha não gasta cota; sem lost-update). `assertCanUseGenre`, `assertCanSave` — todos lançam `GatingError` (402, com `code`).
+- **Gênero premium = qualquer coisa fora dos 5 básicos** (romance + custom). Allowlist server-side em todos os idiomas (`FREE_GENRE_VALUES`). Testado em `tests/entitlements.test.ts`.
 
 Fluxo de erro: rota captura `GatingError` → `{ error, code }` 402. Cliente (`lib/api.ts` `ApiError.code`) mapeia o code → mensagem + CTA "Assinar Pro" (`components/game.tsx` `GATING_KEYS`).
 
 ## Rotas de API (`app/api/*`, todas `runtime="nodejs"`, `auth()` exceto webhook)
 
-- `scene` — exige sessão; gating (genre + start adventure se history vazio; scene/dia sempre) → DeepSeek (cache multi-turno: `system` + pares `assistant`/`user`, prefixo estável → cache automático; loga `[deepseek] cache hit/miss`).
+- `scene` — exige sessão; pre-check gating → DeepSeek (cache multi-turno; `MAX_HISTORY_TURNS=20` janela; retry 1x em JSON inválido/truncado) → record atômico no sucesso.
 - `saves` — GET/POST/DELETE saves do usuário; POST de save novo respeita slots.
 - `me` — GET entitlements.
-- `subscription/checkout` — POST → `createSubscriptionCheckout` (`lib/abacate.ts`, v2, `externalId=userId`) → `{ url }`; cliente redireciona.
-- `webhooks/abacatepay` — valida `?webhookSecret=`; `subscription.completed|renewed`→upsert active, `cancelled`→canceled (idempotente por `userId`); ack 200 p/ user inexistente (evita retry).
+- `subscription/checkout` — POST → `createSubscriptionCheckout` (`lib/abacate.ts`, v2, `externalId=userId`) → `{ url }`.
+- `subscription/cancel` — POST → `cancelSubscription` (v2) + marca `canceled` local.
+- `webhooks/abacatepay` — valida `?webhookSecret=`; `completed|renewed`→active, `cancelled` ou status `EXPIRED/CANCELLED/REFUNDED`→canceled (idempotente por `userId`); ack 200 p/ user inexistente.
+
+Logs: `lib/log.ts` (JSON-line estruturado) nos paths de erro/pagamento/cache. Trocar o sink lá p/ Sentry/Datadog.
 
 ## Frontend
 
@@ -75,7 +81,7 @@ Fluxo de erro: rota captura `GatingError` → `{ error, code }` 402. Cliente (`l
 
 ## Docker
 
-`docker-compose.yml`: serviço `postgres:16-alpine` (volume `storyly-pgdata`, healthcheck) + app standalone (porta 3000, `depends_on` healthy, todas as envs). `DATABASE_URL` aponta pro serviço `postgres`. **Migrations não rodam no runner** (sem drizzle-kit) — aplicar via `pnpm db:migrate` (com `DATABASE_URL`) como passo de deploy/manual.
+`docker-compose.yml`: serviço `postgres:16-alpine` (volume `storyly-pgdata`, healthcheck) + app standalone (porta 3000, `depends_on` healthy, todas as envs). `DATABASE_URL` aponta pro serviço `postgres`. **Migrations auto no boot** via `instrumentation.ts`.
 
 ## Convenções
 

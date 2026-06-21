@@ -67,6 +67,9 @@ export const translations = {
     subscribe_pro: "Upgrade to Pro",
     subscription_active: "Your Pro subscription is active.",
     subscription_canceled: "Your subscription was canceled.",
+    cancel_subscription: "Cancel subscription",
+    canceling: "Canceling...",
+    upgrade_title: "Go Pro",
     pro_benefits:
       "Unlimited adventures, all genres, custom genres, daily scenes with no limit, and unlimited saves.",
     starting_checkout: "Opening checkout...",
@@ -164,6 +167,9 @@ export const translations = {
     subscribe_pro: "Assinar o Pro",
     subscription_active: "Sua assinatura Pro está ativa.",
     subscription_canceled: "Sua assinatura foi cancelada.",
+    cancel_subscription: "Cancelar assinatura",
+    canceling: "Cancelando...",
+    upgrade_title: "Seja Pro",
     pro_benefits:
       "Aventuras ilimitadas, todos os gêneros, gêneros personalizados, cenas diárias sem limite e saves ilimitados.",
     starting_checkout: "Abrindo checkout...",

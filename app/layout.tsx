@@ -46,6 +46,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body
         className={`${literata.variable} ${sourceSans.variable} ${cinzel.variable} ${unna.variable} theme-slate body-text`}
       >
+        {/* Apply the saved theme before paint to avoid a flash of the default. */}
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: tiny inline no-FOUC theme script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t&&t!=='slate'){document.body.classList.remove('theme-slate');document.body.classList.add('theme-'+t);}}catch(e){}})();`,
+          }}
+        />
         <Providers>{children}</Providers>
       </body>
     </html>

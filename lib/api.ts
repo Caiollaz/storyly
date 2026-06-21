@@ -87,3 +87,8 @@ export const startCheckout = async (): Promise<string> => {
   const { url } = (await res.json()) as { url: string };
   return url;
 };
+
+export const cancelSubscription = async (): Promise<void> => {
+  const res = await fetch("/api/subscription/cancel", { method: "POST" });
+  if (!res.ok) throw await parseError(res);
+};

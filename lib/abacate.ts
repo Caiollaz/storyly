@@ -45,6 +45,50 @@ export async function createSubscriptionCheckout(
   return { id: json.data.id, url: json.data.url };
 }
 
+interface ListSubscriptionsResponse {
+  data: Array<{ id: string; externalId: string | null; status: string }> | null;
+  error: string | null;
+}
+
+// Reconciliation fallback for missed webhooks: look up a PAID subscription for
+// our externalId (= userId). Returns the AbacatePay subscription id, or null.
+export async function findPaidSubscription(
+  externalId: string,
+): Promise<{ id: string } | null> {
+  const apiKey = process.env.ABACATEPAY_API_KEY;
+  if (!apiKey) throw new Error("ABACATEPAY_API_KEY is not configured.");
+
+  const url = `${API_BASE}/subscriptions/list?externalId=${encodeURIComponent(externalId)}&status=PAID&limit=1`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${apiKey}` },
+  });
+  const json = (await res.json()) as ListSubscriptionsResponse;
+  if (!res.ok || !json.data || json.data.length === 0) return null;
+  return { id: json.data[0].id };
+}
+
+// Cancel a subscription (takes effect immediately, no grace period).
+// Docs: https://docs.abacatepay.com/pages/subscriptions/cancel
+export async function cancelSubscription(id: string): Promise<void> {
+  const apiKey = process.env.ABACATEPAY_API_KEY;
+  if (!apiKey) throw new Error("ABACATEPAY_API_KEY is not configured.");
+
+  const res = await fetch(`${API_BASE}/subscriptions/cancel`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ id }),
+  });
+  if (!res.ok) {
+    const json = (await res.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    throw new Error(json?.error ?? `AbacatePay cancel error (${res.status})`);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Webhook payloads (v2 — all events share the same envelope)
 // ---------------------------------------------------------------------------

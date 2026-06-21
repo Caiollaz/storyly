@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
+  // Ship migration SQL into the standalone output so instrumentation.ts can
+  // apply them at boot.
+  outputFileTracingIncludes: {
+    "/**": ["./lib/db/migrations/**/*"],
+  },
 };
 
 export default nextConfig;

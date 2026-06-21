@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { createSubscriptionCheckout } from "@/lib/abacate";
+import { log } from "@/lib/log";
 
 export const runtime = "nodejs";
 
@@ -25,9 +26,10 @@ export async function POST() {
       completionUrl: `${appUrl}/account?status=success`,
       returnUrl: `${appUrl}/account`,
     });
+    log.info("subscription.checkout_started", { userId });
     return Response.json({ url });
   } catch (error) {
-    console.error("Error creating AbacatePay subscription:", error);
+    log.error("subscription.checkout_failed", { userId, error });
     return Response.json(
       { error: "Failed to start checkout." },
       { status: 502 },

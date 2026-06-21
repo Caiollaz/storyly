@@ -1,4 +1,5 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import { findPaidSubscription } from "@/lib/abacate";
 import { db } from "@/lib/db";
 import { savedGames, subscriptions, usage } from "@/lib/db/schema";
 import { translations } from "@/lib/i18n/translations";
@@ -8,6 +9,10 @@ export const FREE_LIMITS = {
   scenesPerDay: 20,
   saveSlots: 1,
 } as const;
+
+// Safety cap for Pro: not advertised, just a backstop against abuse / runaway
+// DeepSeek cost from a single account. Adjust freely.
+export const PRO_SCENES_PER_DAY = 500;
 
 // Genres available to free users: the basic predefined genres, in every
 // language. Anything else (romance genres or a custom typed genre) is premium.
@@ -55,6 +60,38 @@ export async function isPro(userId: string): Promise<boolean> {
     return false;
   }
   return true;
+}
+
+// Fallback for a missed `subscription.completed` webhook: if the user isn't Pro
+// in our DB, ask AbacatePay whether they have a PAID subscription and, if so,
+// activate it locally. Cheap call — invoke on the account page, not hot paths.
+// currentPeriodEnd is left null (active until a renew/cancel webhook updates it).
+export async function reconcileSubscription(userId: string): Promise<void> {
+  if (await isPro(userId)) return;
+  let sub: { id: string } | null = null;
+  try {
+    sub = await findPaidSubscription(userId);
+  } catch (error) {
+    console.error("[abacate] reconcile failed:", error);
+    return;
+  }
+  if (!sub) return;
+  await db
+    .insert(subscriptions)
+    .values({
+      userId,
+      abacateSubscriptionId: sub.id,
+      status: "active",
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: subscriptions.userId,
+      set: {
+        abacateSubscriptionId: sub.id,
+        status: "active",
+        updatedAt: new Date(),
+      },
+    });
 }
 
 async function getUsage(userId: string) {
@@ -106,46 +143,64 @@ export function assertCanUseGenre(genre: string, pro: boolean): void {
   }
 }
 
-// Counts an adventure start against the free quota and increments it. No-op for
-// Pro. Throws GatingError("ADVENTURE_LIMIT") when the free limit is reached.
-export async function assertCanStartAdventure(
+// Check/record are split so we count usage only AFTER a successful generation
+// (a failed DeepSeek call must not burn quota). `record*` use atomic SQL
+// increments to avoid lost updates under concurrency.
+
+export async function checkCanStartAdventure(
   userId: string,
   pro: boolean,
 ): Promise<void> {
   if (pro) return;
   const u = await getUsage(userId);
-  const started = u?.adventuresStarted ?? 0;
-  if (started >= FREE_LIMITS.adventures) {
+  if ((u?.adventuresStarted ?? 0) >= FREE_LIMITS.adventures) {
     throw new GatingError("ADVENTURE_LIMIT");
   }
+}
+
+export async function recordAdventureStart(
+  userId: string,
+  pro: boolean,
+): Promise<void> {
+  if (pro) return;
   await db
     .insert(usage)
     .values({ userId, adventuresStarted: 1 })
     .onConflictDoUpdate({
       target: usage.userId,
-      set: { adventuresStarted: started + 1 },
+      set: { adventuresStarted: sql`${usage.adventuresStarted} + 1` },
     });
 }
 
-// Counts a scene against the daily free quota and increments it. No-op for Pro.
-// Throws GatingError("SCENE_LIMIT") when the daily limit is reached.
-export async function assertCanGenerateScene(
+export async function checkCanGenerateScene(
   userId: string,
   pro: boolean,
 ): Promise<void> {
-  if (pro) return;
+  // Both plans are capped (Pro at a much higher safety limit).
+  const limit = pro ? PRO_SCENES_PER_DAY : FREE_LIMITS.scenesPerDay;
   const u = await getUsage(userId);
-  const isSameDay = u?.scenesDate === today();
-  const scenesToday = isSameDay ? (u?.scenesToday ?? 0) : 0;
-  if (scenesToday >= FREE_LIMITS.scenesPerDay) {
+  const scenesToday = u?.scenesDate === today() ? (u?.scenesToday ?? 0) : 0;
+  if (scenesToday >= limit) {
     throw new GatingError("SCENE_LIMIT");
   }
+}
+
+// Always counts (the Pro safety cap relies on it). pro param kept for symmetry.
+export async function recordScene(
+  userId: string,
+  _pro: boolean,
+): Promise<void> {
+  const day = today();
+  // Atomic: increment within the same day, reset to 1 on a new day.
   await db
     .insert(usage)
-    .values({ userId, scenesDate: today(), scenesToday: 1 })
+    .values({ userId, scenesDate: day, scenesToday: 1 })
     .onConflictDoUpdate({
       target: usage.userId,
-      set: { scenesDate: today(), scenesToday: scenesToday + 1 },
+      set: {
+        scenesDate: day,
+        scenesToday: sql`CASE WHEN ${usage.scenesDate} = ${day} THEN ${usage.scenesToday} + 1 ELSE 1 END`,
+      },
     });
 }
 

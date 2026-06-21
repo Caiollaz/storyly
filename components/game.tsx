@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import ChoiceButton from "@/components/choice-button";
@@ -41,6 +42,8 @@ const GATING_KEYS = {
 
 export default function Game({ initialEntitlements }: GameProps) {
   const { language, setLanguage, t, languages } = useTranslations();
+  const router = useRouter();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [gameState, setGameState] = useState<GameState>(
     GameState.GENRE_SELECTION,
   );
@@ -212,11 +215,7 @@ export default function Game({ initialEntitlements }: GameProps) {
             onGenreSelect={handleGenreSelect}
             isLoading={false}
             canUsePremiumGenres={entitlements.canUsePremiumGenres}
-            onUpgrade={() => {
-              setError(t("premium_genre_locked"));
-              setShowUpgrade(true);
-              setGameState(GameState.ERROR);
-            }}
+            onUpgrade={() => setUpgradeOpen(true)}
             saves={saves}
             onContinue={handleContinue}
             onDeleteSave={handleDeleteSave}
@@ -292,6 +291,15 @@ export default function Game({ initialEntitlements }: GameProps) {
         message={t("home_confirm_body")}
         confirmText={t("yes")}
         cancelText={t("no")}
+      />
+      <Modal
+        isOpen={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        onConfirm={() => router.push("/account")}
+        title={t("upgrade_title")}
+        message={t("pro_benefits")}
+        confirmText={t("subscribe_pro")}
+        cancelText={t("cancel")}
       />
       <header className="w-full max-w-3xl mx-auto mb-6">
         {gameState !== GameState.GENRE_SELECTION && genre && (

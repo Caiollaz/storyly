@@ -3,17 +3,20 @@
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
-import { startCheckout } from "@/lib/api";
+import { cancelSubscription, startCheckout } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n/language-context";
 import type { Entitlements } from "@/lib/types";
 
 export default function AccountPanel({
   entitlements,
+  price,
 }: {
   entitlements: Entitlements;
+  price?: string;
 }) {
   const { t } = useTranslations();
   const [loading, setLoading] = useState(false);
+  const [canceling, setCanceling] = useState(false);
 
   const handleSubscribe = async () => {
     setLoading(true);
@@ -22,6 +25,16 @@ export default function AccountPanel({
       window.location.href = url;
     } catch {
       setLoading(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    setCanceling(true);
+    try {
+      await cancelSubscription();
+      window.location.reload();
+    } catch {
+      setCanceling(false);
     }
   };
 
@@ -43,9 +56,19 @@ export default function AccountPanel({
           </div>
 
           {entitlements.isPro ? (
-            <p className="text-[var(--text-secondary)] body-text">
-              {t("subscription_active")}
-            </p>
+            <>
+              <p className="text-[var(--text-secondary)] body-text mb-4">
+                {t("subscription_active")}
+              </p>
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={canceling}
+                className="w-full px-6 py-3 border border-[var(--border-color)] text-[var(--text-secondary)] rounded-md hover:text-[var(--error-text)] hover:border-[var(--error-text)] disabled:opacity-60 transition-colors body-text"
+              >
+                {canceling ? t("canceling") : t("cancel_subscription")}
+              </button>
+            </>
           ) : (
             <>
               <p className="text-[var(--text-secondary)] body-text mb-4">
@@ -57,7 +80,11 @@ export default function AccountPanel({
                 disabled={loading}
                 className="w-full px-6 py-3 bg-[var(--accent-color)] text-[var(--text-on-accent)] font-semibold rounded-md hover:bg-[var(--accent-hover)] disabled:opacity-60 transition-colors body-text"
               >
-                {loading ? t("starting_checkout") : t("subscribe_pro")}
+                {loading
+                  ? t("starting_checkout")
+                  : price
+                    ? `${t("subscribe_pro")} — ${price}`
+                    : t("subscribe_pro")}
               </button>
             </>
           )}

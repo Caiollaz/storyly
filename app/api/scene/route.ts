@@ -3,20 +3,29 @@ import OpenAI from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { auth } from "@/auth";
 import {
-  assertCanGenerateScene,
-  assertCanStartAdventure,
   assertCanUseGenre,
+  checkCanGenerateScene,
+  checkCanStartAdventure,
   GatingError,
   isPro,
+  recordAdventureStart,
+  recordScene,
 } from "@/lib/entitlements";
 import type { Language } from "@/lib/i18n/translations";
 import { translations } from "@/lib/i18n/translations";
+import { log } from "@/lib/log";
 import type { Scene, StoryHistoryItem } from "@/lib/types";
 
 export const runtime = "nodejs";
 
 const MODEL = "deepseek-v4-flash";
 const BASE_URL = "https://api.deepseek.com";
+
+// Cap how much past history we replay to the model. The system + opening prompt
+// stay cached; within a session shorter than this, the full prefix still hits
+// the cache. Long stories drop their oldest turns to bound worst-case (cache-
+// cold) cost when a player returns after the cache TTL has expired.
+const MAX_HISTORY_TURNS = 20;
 
 // DeepSeek JSON mode requires the word "json" and an example of the desired
 // shape in the prompt (it has no structured-schema field like Gemini).
@@ -59,7 +68,7 @@ const buildMessages = (
     { role: "user", content: buildOpeningPrompt(genre) },
   ];
 
-  for (const item of history) {
+  for (const item of history.slice(-MAX_HISTORY_TURNS)) {
     messages.push({ role: "assistant", content: item.sceneDescription });
     messages.push({ role: "user", content: item.playerChoice });
   }
@@ -91,15 +100,16 @@ export async function POST(req: NextRequest) {
   };
 
   const items = history ?? [];
+  const isInitial = items.length === 0;
+  const pro = await isPro(userId);
 
-  // Plan gating (server-enforced). Throws GatingError -> 402 below.
+  // Pre-check quotas WITHOUT counting — a failed generation must not burn quota.
   try {
-    const pro = await isPro(userId);
-    if (items.length === 0) {
+    if (isInitial) {
       assertCanUseGenre(genre, pro);
-      await assertCanStartAdventure(userId, pro);
+      await checkCanStartAdventure(userId, pro);
     }
-    await assertCanGenerateScene(userId, pro);
+    await checkCanGenerateScene(userId, pro);
   } catch (error) {
     if (error instanceof GatingError) {
       return Response.json(
@@ -111,46 +121,63 @@ export async function POST(req: NextRequest) {
   }
 
   const client = new OpenAI({ apiKey, baseURL: BASE_URL });
+  const messages = buildMessages(genre, items, language);
 
   try {
-    const completion = await client.chat.completions.create({
-      model: MODEL,
-      messages: buildMessages(genre, history ?? [], language),
-      response_format: { type: "json_object" },
-      temperature: 0.8,
-      top_p: 0.95,
-      max_tokens: 2048,
-    });
+    // JSON mode can occasionally truncate (max_tokens) or emit malformed JSON;
+    // retry once before giving up.
+    let parsedScene: Scene | null = null;
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= 2 && !parsedScene; attempt++) {
+      const completion = await client.chat.completions.create({
+        model: MODEL,
+        messages,
+        response_format: { type: "json_object" },
+        temperature: 0.8,
+        top_p: 0.95,
+        max_tokens: 2048,
+      });
 
-    // DeepSeek reports cache usage; log it so cost savings are observable.
-    const usage = completion.usage as
-      | { prompt_cache_hit_tokens?: number; prompt_cache_miss_tokens?: number }
-      | undefined;
-    if (usage) {
-      console.log(
-        `[deepseek] cache hit=${usage.prompt_cache_hit_tokens ?? 0} miss=${usage.prompt_cache_miss_tokens ?? 0}`,
-      );
+      const usage = completion.usage as
+        | {
+            prompt_cache_hit_tokens?: number;
+            prompt_cache_miss_tokens?: number;
+          }
+        | undefined;
+      if (usage) {
+        log.info("deepseek.cache", {
+          hit: usage.prompt_cache_hit_tokens ?? 0,
+          miss: usage.prompt_cache_miss_tokens ?? 0,
+        });
+      }
+
+      try {
+        const jsonString = completion.choices[0]?.message?.content;
+        if (!jsonString) throw new Error("Empty response received from API.");
+        const scene: Scene = JSON.parse(jsonString);
+        if (
+          !scene.description ||
+          !Array.isArray(scene.choices) ||
+          scene.choices.length === 0
+        ) {
+          throw new Error("Invalid scene format received from API.");
+        }
+        parsedScene = scene;
+      } catch (parseError) {
+        lastError = parseError;
+        log.warn("deepseek.bad_output", { attempt, error: parseError });
+      }
     }
 
-    const jsonString = completion.choices[0]?.message?.content;
-    if (!jsonString) {
-      throw new Error("Empty response received from API.");
-    }
+    if (!parsedScene) throw lastError ?? new Error("Generation failed.");
 
-    const parsedScene: Scene = JSON.parse(jsonString);
-
-    // Basic validation
-    if (
-      !parsedScene.description ||
-      !Array.isArray(parsedScene.choices) ||
-      parsedScene.choices.length === 0
-    ) {
-      throw new Error("Invalid scene format received from API.");
-    }
+    // Count usage only after a successful, valid generation (atomic).
+    await recordScene(userId, pro);
+    if (isInitial) await recordAdventureStart(userId, pro);
 
     return Response.json(parsedScene);
   } catch (error) {
-    console.error("Error generating scene with DeepSeek:", error);
+    log.error("scene.generate_failed", { userId, error });
     return Response.json(
       {
         error:

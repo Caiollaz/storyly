@@ -72,6 +72,7 @@
 | `pnpm start`   | Servidor de produção              |
 | `pnpm lint`    | Lint (Biome)                      |
 | `pnpm format`  | Formatação automática (Biome)     |
+| `pnpm test`    | Testes (Vitest)                   |
 | `pnpm db:generate` | Gera migration a partir do schema |
 | `pnpm db:migrate`  | Aplica migrations no banco        |
 | `pnpm db:push`     | Aplica o schema direto (dev)      |
@@ -87,10 +88,7 @@
 
 `docker compose up --build` sobe **Postgres + app** (standalone, porta 3000). Defina as envs (ex.: em um `.env` lido pelo compose, ou exportadas): `DEEPSEEK_API_KEY`, `AUTH_SECRET`, `AUTH_URL`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `ABACATEPAY_*`. O `DATABASE_URL` aponta automaticamente pro serviço `postgres`.
 
-**Migrations:** o runtime standalone não inclui o drizzle-kit. Aplique o schema uma vez (ou em cada deploy) com `DATABASE_URL` apontando pro banco:
-```bash
-pnpm db:migrate
-```
+**Migrations:** rodam automaticamente no boot da app (`instrumentation.ts`). Fallback manual: `pnpm db:migrate`.
 
 ## 🚀 Deploy no Dokploy (VPS)
 
@@ -98,7 +96,7 @@ pnpm db:migrate
 2. **Variáveis de ambiente** (runtime, nunca build args): todas as do `.env.example`. `AUTH_URL` = URL pública.
 3. **Postgres:** crie um serviço Postgres no Dokploy e aponte o `DATABASE_URL`.
 4. **Build:** Context `/`, Dockerfile `Dockerfile`, **Port `3000`**.
-5. **Migrations:** rode `pnpm db:migrate` (pré-deploy/manual) contra o `DATABASE_URL`.
+5. **Migrations:** aplicadas automaticamente no boot (fallback: `pnpm db:migrate`).
 6. **Webhook AbacatePay:** `https://SEU_DOMINIO/api/webhooks/abacatepay?webhookSecret=<ABACATEPAY_WEBHOOK_SECRET>`.
 7. **Google OAuth:** adicione o redirect `https://SEU_DOMINIO/api/auth/callback/google`.
 

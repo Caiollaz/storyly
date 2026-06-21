@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import type { AbacateWebhook } from "@/lib/abacate";
 import { db } from "@/lib/db";
 import { subscriptions, users } from "@/lib/db/schema";
+import { log } from "@/lib/log";
 
 export const runtime = "nodejs";
 
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
     data?.customer?.metadata?.externalId;
 
   if (!userId) {
-    console.warn(`[abacate] webhook ${event} without externalId; ignoring.`);
+    log.warn("abacate.webhook_no_external_id", { event });
     return Response.json({ ok: true });
   }
 
@@ -36,9 +37,7 @@ export async function POST(req: NextRequest) {
     .where(eq(users.id, userId))
     .limit(1);
   if (!user) {
-    console.warn(
-      `[abacate] webhook ${event} for unknown user ${userId}; ignoring.`,
-    );
+    log.warn("abacate.webhook_unknown_user", { event, userId });
     return Response.json({ ok: true });
   }
 
@@ -47,7 +46,16 @@ export async function POST(req: NextRequest) {
     data?.nextBilling ?? data?.subscription?.nextBilling ?? null;
   const currentPeriodEnd = nextBilling ? new Date(nextBilling) : null;
 
-  if (event === "subscription.completed" || event === "subscription.renewed") {
+  // A non-paid status on any subscription event means the plan lapsed
+  // (expired / refunded / cancelled) — downgrade regardless of event name.
+  const lapsed = ["EXPIRED", "CANCELLED", "REFUNDED"].includes(
+    (data?.status ?? "").toUpperCase(),
+  );
+
+  if (
+    !lapsed &&
+    (event === "subscription.completed" || event === "subscription.renewed")
+  ) {
     await db
       .insert(subscriptions)
       .values({
@@ -66,7 +74,7 @@ export async function POST(req: NextRequest) {
           updatedAt: new Date(),
         },
       });
-  } else if (event === "subscription.cancelled") {
+  } else if (event === "subscription.cancelled" || lapsed) {
     await db
       .insert(subscriptions)
       .values({
@@ -80,8 +88,9 @@ export async function POST(req: NextRequest) {
         set: { status: "canceled", updatedAt: new Date() },
       });
   } else {
-    console.log(`[abacate] unhandled event ${event}`);
+    log.info("abacate.webhook_unhandled", { event });
   }
 
+  log.info("abacate.webhook", { event, userId, lapsed });
   return Response.json({ ok: true });
 }
