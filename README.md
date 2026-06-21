@@ -4,192 +4,151 @@
 
 ## 🎮 Funcionalidades
 
-- **Histórias Geradas por IA**: Cada aventura é única e criada em tempo real por inteligência artificial
-- **Múltiplos Gêneros**: Escolha entre gêneros pré-definidos ou crie o seu próprio
-- **Sistema de Salvamento**: Salve e retome suas aventuras a qualquer momento
-- **Multi-idioma**: Suporte para inglês e português
-- **Temas Personalizáveis**: Escolha entre temas claro, escuro ou "paperwhite"
-- **Sistema de Fontes Sofisticado**: Literata para leitura, Cinzel/Unna para títulos épicos, Source Sans 3 para interface
-- **Experiência Imersiva**: Histórias detalhadas com escolhas significativas
+- **Histórias Geradas por IA**: cada aventura é única e criada em tempo real (DeepSeek)
+- **Múltiplos Gêneros**: escolha entre gêneros pré-definidos ou crie o seu próprio
+- **Sistema de Salvamento**: salve e retome suas aventuras a qualquer momento (localStorage)
+- **Multi-idioma**: suporte para inglês e português
+- **Temas Personalizáveis**: slate, dark ou paperwhite
+- **Sistema de Fontes**: Literata para leitura, Cinzel/Unna para títulos, Source Sans 3 para interface
+- **Chave de API protegida**: a chamada ao DeepSeek roda no servidor (Route Handler), a chave nunca chega ao navegador
 
 ## 🚀 Tecnologias Utilizadas
 
-- **React 19** com TypeScript
-- **API de IA** para geração de histórias
-- **Vite** para build e desenvolvimento
-- **Tailwind CSS** para estilização
-- **LocalStorage** para salvamento de jogos
+- **Next.js 16** (App Router) com TypeScript
+- **React 19**
+- **DeepSeek** (SDK `openai`, API compatível, modelo `deepseek-v4-flash`, 1M de contexto) — chamado server-side via Route Handler
+- **Auth.js v5** (login com Google, sessão no banco)
+- **Postgres + Drizzle ORM** (contas, assinatura, saves, contadores)
+- **AbacatePay** — assinatura recorrente (PIX/cartão)
+- **Tailwind CSS v4** · **next/font** · **Biome** (lint+format) · **pnpm**
 
 ## 📋 Pré-requisitos
 
-- Node.js (versão 16 ou superior)
-- Uma chave de API de um serviço de IA compatível
+- Node.js 20.9+ (Next.js 16)
+- Postgres (local ou container)
+- Chave de API do **DeepSeek**
+- **Google OAuth** client (Google Cloud)
+- Conta **AbacatePay** com um produto de assinatura
 
 ## ▶️ Como Executar Localmente
 
-1. **Clone o repositório:**
+1. **Clone e instale:**
    ```bash
    git clone https://github.com/caiollaz/storyly.git
    cd storyly
+   pnpm install
    ```
 
-2. **Instale as dependências:**
+2. **Configure as variáveis de ambiente:**
    ```bash
-   npm install
+   cp .env.example .env.local
    ```
+   Preencha em `.env.local` (todas server-side — **nunca** use `NEXT_PUBLIC_`):
+   - `DEEPSEEK_API_KEY` — https://platform.deepseek.com/api_keys
+   - `DATABASE_URL` — seu Postgres
+   - `AUTH_SECRET` — gere com `openssl rand -base64 33`
+   - `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` — OAuth client (redirect URI: `http://localhost:3000/api/auth/callback/google`)
+   - `ABACATEPAY_API_KEY` / `ABACATEPAY_PRO_PRODUCT_ID` / `ABACATEPAY_WEBHOOK_SECRET`
 
-3. **Configure sua chave de API:**
-   - Obtenha uma chave de API do Google Gemini em: https://makersuite.google.com/app/apikey
-   - Copie o arquivo `env.example` para `.env`:
-     ```bash
-     cp env.example .env
-     ```
-   - Edite o arquivo `.env` e substitua `sua_chave_api_aqui` pela sua chave real
-   - **IMPORTANTE**: Nunca commite o arquivo `.env` no Git por questões de segurança
-
-4. **Inicie a aplicação:**
+3. **Suba o banco e aplique o schema:**
    ```bash
-   npm run dev
+   docker run -d --name storyly-pg -e POSTGRES_USER=storyly -e POSTGRES_PASSWORD=storyly \
+     -e POSTGRES_DB=storyly -p 5432:5432 postgres:16-alpine
+   pnpm db:migrate
    ```
 
-5. **Acesse a aplicação:**
-   Abra seu navegador e visite `http://localhost:5173`
+4. **Inicie e acesse:**
+   ```bash
+   pnpm dev
+   ```
+   Abra `http://localhost:3000` → faça login com Google.
+
+### Scripts
+
+| Script            | Descrição                         |
+| ----------------- | --------------------------------- |
+| `pnpm dev`     | Servidor de desenvolvimento       |
+| `pnpm build`   | Build de produção (standalone)    |
+| `pnpm start`   | Servidor de produção              |
+| `pnpm lint`    | Lint (Biome)                      |
+| `pnpm format`  | Formatação automática (Biome)     |
+| `pnpm db:generate` | Gera migration a partir do schema |
+| `pnpm db:migrate`  | Aplica migrations no banco        |
+| `pnpm db:push`     | Aplica o schema direto (dev)      |
+
+## 💳 Login e Assinatura
+
+- **Login:** Google OAuth (Auth.js). Toda a app exige login; o acesso é gateado em Server Components.
+- **Plano Free:** 3 aventuras no total, 20 cenas/dia, 1 save, sem gêneros de romance nem gênero customizado.
+- **Plano Pro (AbacatePay):** tudo ilimitado + gêneros premium. Checkout em `/account` → AbacatePay → o webhook (`/api/webhooks/abacatepay`) ativa a assinatura.
+- Ajuste os limites em `lib/entitlements.ts` (`FREE_LIMITS`).
 
 ## 🐳 Como Executar com Docker
 
-1. **Construa e execute com Docker:**
-   ```bash
-   # Construa a imagem (sem dados sensíveis)
-   docker build -t storyly .
-   
-   # Execute o container passando a API key como variável de ambiente
-   docker run -p 3001:3001 -e GEMINI_API_KEY=sua_chave_api_aqui storyly
-   ```
+`docker compose up --build` sobe **Postgres + app** (standalone, porta 3000). Defina as envs (ex.: em um `.env` lido pelo compose, ou exportadas): `DEEPSEEK_API_KEY`, `AUTH_SECRET`, `AUTH_URL`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `ABACATEPAY_*`. O `DATABASE_URL` aponta automaticamente pro serviço `postgres`.
 
-2. **Ou use Docker Compose:**
-   ```bash
-   # Configure sua API key como variável de ambiente
-   export GEMINI_API_KEY=sua_chave_api_aqui
-   
-   # Execute com Docker Compose
-   docker-compose up --build
-   ```
-
-3. **Para Produção com Docker Secrets:**
-   ```bash
-   # Crie um secret
-   echo "sua_chave_api_aqui" | docker secret create gemini_api_key -
-   
-   # Execute com secret
-   docker service create \
-     --name storyly \
-     --secret gemini_api_key \
-     --env GEMINI_API_KEY_FILE=/run/secrets/gemini_api_key \
-     -p 3001:3001 \
-     storyly
-   ```
-
-4. **Acesse a aplicação:**
-   Abra seu navegador e visite `http://localhost:3001`
+**Migrations:** o runtime standalone não inclui o drizzle-kit. Aplique o schema uma vez (ou em cada deploy) com `DATABASE_URL` apontando pro banco:
+```bash
+pnpm db:migrate
+```
 
 ## 🚀 Deploy no Dokploy (VPS)
 
-Para fazer deploy no Dokploy, siga estes passos:
-
-1. **Conecte seu repositório:**
-   - Acesse seu painel do Dokploy
-   - Vá em "Applications" → "New Application"
-   - Conecte seu repositório GitHub/GitLab
-
-2. **Configure as variáveis de ambiente:**
-   - Na seção "Environment Variables" do seu projeto
-   - Adicione: `GEMINI_API_KEY` = `sua_chave_api_aqui`
-   - **IMPORTANTE**: Nunca commite a chave no código!
-   - **DICA**: Se não funcionar, tente reiniciar o container após adicionar a variável
-
-3. **Configure o build:**
-   - **Build Context**: `/` (raiz do projeto)
-   - **Dockerfile Path**: `Dockerfile`
-   - **Port**: `3001`
-   - **Build Arguments**: Adicione `GEMINI_API_KEY` com o valor da sua chave
-
-4. **Deploy:**
-   - Clique em "Deploy"
-   - O Dokploy fará o build automático da imagem
-   - A aplicação estará disponível na URL fornecida
-   - **Verifique os logs** para confirmar que a variável foi carregada (deve aparecer "✅ Loaded")
-
-5. **Configuração de domínio (opcional):**
-   - Vá em "Domains" → "Add Domain"
-   - Configure seu domínio personalizado
-   - O Dokploy configurará automaticamente o SSL
-
-### 🔒 Segurança no Dokploy:
-- ✅ Variáveis de ambiente são criptografadas
-- ✅ A API key nunca é exposta no código
-- ✅ Build automático sem dados sensíveis
-- ✅ SSL automático para domínios personalizados
-
-### 🐛 Troubleshooting:
-- **Variável não carrega**: Verifique se o nome está exatamente `GEMINI_API_KEY`
-- **Build falha**: Confirme que a variável foi salva antes do deploy
-- **Funciona local mas não no Docker**: Certifique-se de adicionar a variável em "Build Arguments" no Dokploy
-- **Ainda não funciona**: Verifique se não há espaços extras no valor da variável
+1. **Conecte o repositório** em "Applications" → "New Application".
+2. **Variáveis de ambiente** (runtime, nunca build args): todas as do `.env.example`. `AUTH_URL` = URL pública.
+3. **Postgres:** crie um serviço Postgres no Dokploy e aponte o `DATABASE_URL`.
+4. **Build:** Context `/`, Dockerfile `Dockerfile`, **Port `3000`**.
+5. **Migrations:** rode `pnpm db:migrate` (pré-deploy/manual) contra o `DATABASE_URL`.
+6. **Webhook AbacatePay:** `https://SEU_DOMINIO/api/webhooks/abacatepay?webhookSecret=<ABACATEPAY_WEBHOOK_SECRET>`.
+7. **Google OAuth:** adicione o redirect `https://SEU_DOMINIO/api/auth/callback/google`.
 
 ## 🎯 Como Jogar
 
-1. **Selecione um gênero** entre as opções pré-definidas ou crie o seu próprio
-2. **Leia a história** gerada pela IA
-3. **Faça suas escolhas** entre as opções apresentadas
-4. **Continue a aventura** até alcançar um final ou salvar o jogo
-5. **Salve sua aventura** a qualquer momento para continuar depois
+1. Selecione um gênero (pré-definido ou crie o seu)
+2. Leia a história gerada pela IA
+3. Faça suas escolhas
+4. Continue a aventura ou salve o jogo
+5. Retome quando quiser
 
-## 🌍 Idiomas Disponíveis
+## 🌍 Idiomas
 
 - 🇺🇸 Inglês
 - 🇧🇷 Português
 
-## 🎨 Temas Disponíveis
+## 🎨 Temas
 
-- **Slate**: Tema escuro com tons de azul
-- **Dark**: Tema escuro clássico
-- **Paperwhite**: Tema claro com aparência de papel
-
-## 📖 Sistema de Fontes
-
-### Fontes Utilizadas:
-- **Literata**: Fonte serifada do Google, otimizada para leitura longa
-- **Cinzel**: Fonte épica para títulos principais (maiúsculas, espaçamento amplo)
-- **Unna**: Fonte dramática para títulos secundários
-- **Source Sans 3**: Fonte sans-serif limpa para elementos da interface
-
-### Características:
-- **Literata**: Espaçamento otimizado (1.6), renderização suavizada
-- **Cinzel**: Estilo épico com maiúsculas e espaçamento amplo
-- **Unna**: Estilo dramático com peso bold
-- **Source Sans 3**: Interface limpa e moderna
-- Responsividade para diferentes tamanhos de tela
+- **Slate**: escuro com tons de azul
+- **Dark**: escuro clássico
+- **Paperwhite**: claro, aparência de papel
 
 ## 🛠️ Estrutura do Projeto
 
 ```
-src/
-├── components/          # Componentes React reutilizáveis
-├── i18n/               # Configuração de internacionalização
-├── services/           # Serviços (integração com API de IA)
-├── App.tsx             # Componente principal da aplicação
-├── types.ts            # Definições de tipos TypeScript
-└── index.tsx           # Ponto de entrada da aplicação
+auth.ts                 # Auth.js (Google + Drizzle adapter)
+app/
+├── layout.tsx          # next/font, metadata, Providers
+├── providers.tsx       # SessionProvider + LanguageProvider
+├── page.tsx            # Server: gate de login -> <Game>
+├── login/ account/     # Telas de login e conta/assinatura
+├── globals.css         # Tailwind v4 + temas + fontes
+└── api/                # scene, saves, me, subscription/checkout, webhooks, auth
+components/             # game.tsx + apresentação (kebab-case)
+lib/
+├── api.ts              # Cliente HTTP (requestScene, saves, checkout)
+├── abacate.ts          # AbacatePay v2 (assinatura)
+├── entitlements.ts     # Gating por plano (FREE_LIMITS)
+├── db/                 # Drizzle: schema, client, migrations
+├── types.ts            # Tipos
+└── i18n/               # Internacionalização
 ```
 
 ## 🔒 Segurança
 
-- **NUNCA** commite arquivos `.env` ou chaves de API no repositório
-- Use o arquivo `env.example` como modelo para configuração
-- Mantenha suas chaves de API seguras e rotacione-as regularmente
-- **NUNCA** use `ARG` ou `ENV` no Dockerfile para dados sensíveis
-- Use variáveis de ambiente no runtime ou Docker Secrets para produção
-- A imagem Docker não contém dados sensíveis - apenas no momento da execução
+- Todos os segredos são **server-side** (sem `NEXT_PUBLIC_`): DeepSeek, AbacatePay, Google, `AUTH_SECRET`, DB. Não vão ao bundle do cliente.
+- Gating de plano é **enforçado no servidor** (rotas + Server Components), não só na UI.
+- Webhook valida o `webhookSecret`.
+- **NUNCA** commite `.env.local` (já no `.gitignore`).
+- No Docker, segredos entram **só em runtime**, nunca como `ARG`/`ENV` de build. Rotacione chaves regularmente.
 
 ## 🤝 Contribuindo
 
@@ -197,13 +156,6 @@ Contribuições são bem-vindas! Sinta-se à vontade para abrir issues e pull re
 
 ## 📄 Licença
 
-Este projeto é licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
+Licença MIT — veja [LICENSE](LICENSE).
 
-## 💡 Dicas
-
-- Cada história é única e pode levar a finais inesperados
-- Suas escolhas realmente afetam o rumo da história
-- Experimente diferentes gêneros para experiências variadas
-- Não tenha medo de fazer escolhas criativas ou inesperadas!
-
-Desenvolvido com ❤️ por Caio Labella - onde suas escolhas moldam a história.
+Desenvolvido com ❤️ por Caio Labella — onde suas escolhas moldam a história.

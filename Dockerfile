@@ -1,40 +1,41 @@
 # Etapa de construção
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copiar os arquivos de dependências
-COPY package*.json ./
+# Habilitar pnpm via corepack
+RUN corepack enable
 
-# Instalar dependências
-RUN npm ci
+# Instalar dependências (lockfile congelado)
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
-# Copiar o código fonte
+# Copiar o código fonte e construir (saída standalone)
 COPY . .
-
-# Definir argumento de build para a API key
-ARG GEMINI_API_KEY
-ENV GEMINI_API_KEY=${GEMINI_API_KEY}
-
-# Construir a aplicação (agora com a variável disponível)
-RUN npm run build
+# NÃO há ARG DEEPSEEK_API_KEY no build: a chave é server-side e injetada só em runtime.
+RUN pnpm run build
 
 # Etapa de produção
-FROM node:18-alpine
-
-# Instalar um servidor HTTP simples
-RUN npm install -g serve
+FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Copiar os arquivos construídos
-COPY --from=builder /app/dist .
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
-# Expor a porta 3001
-EXPOSE 3001
+# Usuário não-root
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 nextjs
 
-# Não definir variáveis sensíveis no Dockerfile
-# A API key será passada como variável de ambiente no runtime
+# Copiar artefatos do build standalone
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Comando para iniciar o servidor
-CMD ["serve", "-s", ".", "-l", "3001"]
+USER nextjs
+
+EXPOSE 3000
+
+# A DEEPSEEK_API_KEY é passada como variável de ambiente no runtime (segredo server-side)
+CMD ["node", "server.js"]

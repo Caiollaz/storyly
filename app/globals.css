@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+:root,
+.theme-slate {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-secondary-translucent: rgba(30, 41, 59, 0.5);
+  --bg-disabled: #475569;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-accent: #818cf8;
+  --text-accent-light: #a5b4fc;
+  --text-on-accent: #ffffff;
+  --border-color: #334155;
+  --border-color-translucent: rgba(51, 65, 85, 0.5);
+  --accent-color: #4f46e5;
+  --accent-hover: #6366f1;
+  --focus-ring: #6366f1;
+  --error-text: #f87171;
+}
+
+.theme-dark {
+  --bg-primary: #000000;
+  --bg-secondary: #1a1a1a;
+  --bg-secondary-translucent: rgba(26, 26, 26, 0.5);
+  --bg-disabled: #333333;
+  --text-primary: #ffffff;
+  --text-secondary: #b3b3b3;
+  --text-muted: #808080;
+  --text-accent: #93c5fd;
+  --text-accent-light: #bfdbfe;
+  --text-on-accent: #ffffff;
+  --border-color: #333333;
+  --border-color-translucent: rgba(51, 51, 51, 0.5);
+  --accent-color: #2563eb;
+  --accent-hover: #3b82f6;
+  --focus-ring: #3b82f6;
+  --error-text: #ef4444;
+}
+
+.theme-paperwhite {
+  --bg-primary: #fbf6e8;
+  --bg-secondary: #ede7d7;
+  --bg-secondary-translucent: rgba(237, 231, 215, 0.5);
+  --bg-disabled: #dcd3c1;
+  --text-primary: #3a2d21;
+  --text-secondary: #5c4a3d;
+  --text-muted: #8d7a6e;
+  --text-accent: #8c5a32;
+  --text-accent-light: #a67b5b;
+  --text-on-accent: #ffffff;
+  --border-color: #dcd3c1;
+  --border-color-translucent: rgba(220, 211, 193, 0.5);
+  --accent-color: #8c5a32;
+  --accent-hover: #a67b5b;
+  --focus-ring: #8c5a32;
+  --error-text: #c0392b;
+}
+
+/* Font families wired to next/font CSS variables (set on <body> in layout.tsx) */
+:root {
+  --font-reading: var(--font-literata), "Times New Roman", serif;
+  --font-body: var(--font-source-sans), "Arial", sans-serif;
+  --font-title-epic: var(--font-cinzel), "Times New Roman", serif;
+  --font-title-dramatic: var(--font-unna), "Times New Roman", serif;
+
+  /* Optimised reading settings */
+  --reading-line-height: 1.6;
+  --reading-letter-spacing: 0.01em;
+  --reading-word-spacing: 0.05em;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-choice {
+  opacity: 0; /* Start hidden */
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* Reading font, optimised for long passages */
+.reading-text {
+  font-family: var(--font-reading);
+  line-height: var(--reading-line-height);
+  letter-spacing: var(--reading-letter-spacing);
+  word-spacing: var(--reading-word-spacing);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Body / UI font */
+.body-text {
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+/* Epic titles */
+.title-epic {
+  font-family: var(--font-title-epic);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Dramatic secondary titles */
+.title-dramatic {
+  font-family: var(--font-title-dramatic);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.theme-slate .reading-text {
+  font-weight: 400;
+}
+
+.theme-dark .reading-text {
+  font-weight: 400;
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.theme-paperwhite .reading-text {
+  font-weight: 500;
+  color: #2c2c2c;
+}
+
+@media (max-width: 768px) {
+  .reading-text {
+    line-height: 1.7;
+    letter-spacing: 0.015em;
+  }
+}
+
+@media (min-width: 1200px) {
+  .reading-text {
+    line-height: 1.5;
+    letter-spacing: 0.005em;
+  }
+}

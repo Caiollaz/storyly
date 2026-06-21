@@ -1,11 +1,41 @@
-version: '3.8'
-
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-storyly}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-storyly}
+      POSTGRES_DB: ${POSTGRES_DB:-storyly}
+    volumes:
+      - storyly-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-storyly}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   storyly:
     build: .
     ports:
-      - "3001:3001"
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-    volumes:
-      - ./dist:/usr/share/nginx/html
+      # IA
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      # DB (aponta para o serviço postgres acima)
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-storyly}:${POSTGRES_PASSWORD:-storyly}@postgres:5432/${POSTGRES_DB:-storyly}
+      # Auth.js
+      - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_URL=${AUTH_URL}
+      - AUTH_GOOGLE_ID=${AUTH_GOOGLE_ID}
+      - AUTH_GOOGLE_SECRET=${AUTH_GOOGLE_SECRET}
+      # AbacatePay
+      - ABACATEPAY_API_KEY=${ABACATEPAY_API_KEY}
+      - ABACATEPAY_PRO_PRODUCT_ID=${ABACATEPAY_PRO_PRODUCT_ID}
+      - ABACATEPAY_WEBHOOK_SECRET=${ABACATEPAY_WEBHOOK_SECRET}
+    restart: unless-stopped
+
+volumes:
+  storyly-pgdata:

@@ -8,6 +8,11 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+
+# Next.js
+.next/
+next-env.d.ts
+*.tsbuildinfo
 dist
 dist-ssr
 *.local
@@ -24,3 +29,4 @@ dist-ssr
 *.sw?
 
 .env
+.env*.local
